@@ -149,6 +149,7 @@ done
 
 .oO[RunExtendedOfflineValidation]Oo.
 .oO[RunTrackSplitPlot]Oo.
+.oO[MergeZmumuPlots]Oo.
 
 # clean-up
 # ls -l *.root
