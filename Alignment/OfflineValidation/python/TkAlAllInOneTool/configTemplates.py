@@ -149,6 +149,7 @@ done
 
 .oO[RunExtendedOfflineValidation]Oo.
 .oO[RunTrackSplitPlot]Oo.
+.oO[MergeZmumuPlots]Oo.
 
 # clean-up
 # ls -l *.root
@@ -204,35 +205,10 @@ fi
 extendedValidationExecution="""
 #run extended offline validation scripts
 echo -e "\n\nRunning extended offline validation"
-if [[ $HOSTNAME = lxplus[0-9]*\.cern\.ch ]] # check for interactive mode
-then
-    rfmkdir -p .oO[workdir]Oo./ExtendedOfflineValidation_Images
-else
-    mkdir -p ExtendedOfflineValidation_Images
-fi
 
 rfcp .oO[extendedValScriptPath]Oo. .
-rfcp .oO[CMSSW_BASE]Oo./src/Alignment/OfflineValidation/macros/PlotAlignmentValidation.C .
 root -x -b -q -l TkAlExtendedOfflineValidation.C
-rfmkdir -p .oO[datadir]Oo./ExtendedOfflineValidation_Images
 
-if [[ $HOSTNAME = lxplus[0-9]*\.cern\.ch ]] # check for interactive mode
-then
-    image_files=$(ls --color=never | find .oO[workdir]Oo./ExtendedOfflineValidation_Images/ -name \*ps -o -name \*root)
-    echo -e "\n\nProduced plot files:"
-    #echo ${image_files}
-    ls .oO[workdir]Oo./ExtendedOfflineValidation_Images
-else
-    image_files=$(ls --color=never | find ExtendedOfflineValidation_Images/ -name \*ps -o -name \*root)
-    echo -e "\n\nProduced plot files:"
-    #echo ${image_files}
-    ls ExtendedOfflineValidation_Images
-fi
-
-for image in ${image_files}
-do
-    cp ${image} .oO[datadir]Oo./ExtendedOfflineValidation_Images
-done
 """
 
 
@@ -245,12 +221,9 @@ void TkAlExtendedOfflineValidation()
   // load framework lite just to find the CMSSW libs...
   gSystem->Load("libFWCoreFWLite");
   AutoLibraryLoader::enable();
-  //compile the makro
-  //gROOT->ProcessLine(".L .oO[CMSSW_BASE]Oo./src/Alignment/OfflineValidation/macros/PlotAlignmentValidation.C++");
-  // gROOT->ProcessLine(".L ./PlotAlignmentValidation.C++");
 
   .oO[extendedInstantiation]Oo.
-  p.setOutputDir("./ExtendedOfflineValidation_Images");
+  p.setOutputDir(".oO[datadir]Oo./ExtendedOfflineValidation_Images");
   p.setTreeBaseDir(".oO[OfflineTreeBaseDir]Oo.");
   p.plotDMR(".oO[DMRMethod]Oo.",.oO[DMRMinimum]Oo.,".oO[DMROptions]Oo.");
   p.plotSurfaceShapes(".oO[SurfaceShapes]Oo.");
