@@ -27,7 +27,7 @@ process.load("Alignment.CommonAlignmentProducer.AlignmentProducer_cff")
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 
 
-process.GlobalTag.globaltag = "80X_dataRun2_PromptValidation_Candidate_2016_08_31_19_09_46"
+process.GlobalTag.globaltag = "80X_dataRun2_Prompt_v11_forReRecoTkStudies"
 
 
 process.load("FWCore.MessageService.MessageLogger_cfi")

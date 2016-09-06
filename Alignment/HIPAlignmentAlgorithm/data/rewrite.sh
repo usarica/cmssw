@@ -7,6 +7,7 @@ if [[ "$3" != "" ]]; then
    let nfiles_per_job=$3
 fi
 
+rm $out_file
 
 let i=0
 while read line

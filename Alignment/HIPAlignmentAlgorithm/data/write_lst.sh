@@ -28,7 +28,9 @@ do
 
    for i in $(ls *$name*)
    do
-      echo "data/"$i","$track_type >> $lst_file
+      if [[ "$i" == "ALCARECOTkAl"* ]];then
+         echo "data/"$i","$track_type >> $lst_file
+      fi
    done
 
 done
