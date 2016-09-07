@@ -81,20 +81,20 @@ process.AlignmentProducer.ParameterBuilder.Selector = cms.PSet(
     alignParams = cms.vstring(
         'TrackerTPBHalfBarrel,111111',
         'TrackerTPEHalfCylinder,111111',
-        'TrackerTIBHalfBarrel,111111',
+#        'TrackerTIBHalfBarrel,111111',
 #        'TrackerTOBHalfBarrel,111111',
 #        'TrackerTIDEndcap,111111',
 #        'TrackerTECEndcap,111111',
 
 #      'TrackerTPBModule,101101',
 #      'TrackerTPEModule,111111',
+
+# Do either one of these, use Module usually
 #      'TrackerTIBModuleUnit,101111',
 #      'TrackerTOBModuleUnit,101111',
 #      'TrackerTIDModuleUnit,111111',
 #      'TrackerTECModuleUnit,111111'
 
-#      'TrackerTPBModule,101101',
-#      'TrackerTPEModule,111111',
 #      'TrackerTIBModule,101111',
 #      'TrackerTOBModule,101111',
 #      'TrackerTIDModule,110111',
