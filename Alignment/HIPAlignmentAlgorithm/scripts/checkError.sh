@@ -38,7 +38,7 @@ then
 #echo "===================="
 #echo "--- $filename "
 	let STATUS=$STATUS+1
-	echo "error from $(hostname): RUnzip erro in collect at iter $iter " | mail -s "--- RUNZIP ERROR in $filename ---" ${1}@mail.cern.ch
+	echo "error from $(hostname): RUnzip error in collect at iter $iter " | mail -s "--- RUNZIP ERROR in $filename ---" ${1}@mail.cern.ch
     fi
 fi
 

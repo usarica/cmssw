@@ -1,0 +1,8 @@
+data/ALCARECO*
+data/*.txt
+data/*.root
+
+scripts/*.lst
+scripts/*.dat
+
+*.dat
