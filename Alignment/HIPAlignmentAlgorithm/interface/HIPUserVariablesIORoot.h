@@ -50,7 +50,7 @@ class HIPUserVariablesIORoot : public AlignmentIORootBase,
 
   // data members
 
-  static const int nparmax=6;
+  static const int nparmax=19;
 
   /** alignment parameter tree */
   int ObjId;
