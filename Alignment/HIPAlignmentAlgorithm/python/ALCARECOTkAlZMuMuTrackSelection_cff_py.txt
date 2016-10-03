@@ -49,35 +49,31 @@ process.AlignmentTrackSelector.src = 'ctfProducerCustomised'
 process.AlignmentTrackSelector.filter = True
 process.AlignmentTrackSelector.applyBasicCuts = True
 process.AlignmentTrackSelector.pMin    = 8.0
-process.AlignmentTrackSelector.ptMin   = 15.0
+#process.AlignmentTrackSelector.ptMin   = 1.0
+process.AlignmentTrackSelector.ptMin   = 10.0
 #process.AlignmentTrackSelector.pMin    = 4.0 #0T collision
 #process.AlignmentTrackSelector.ptMin   = 0.0 #0T collision
 #process.AlignmentTrackSelector.dzMin   = -20.
 #process.AlignmentTrackSelector.dzMax   = 20.
 process.AlignmentTrackSelector.d0Min   = -50.
 process.AlignmentTrackSelector.d0Max   = 50.
-process.AlignmentTrackSelector.etaMin  = -3.
-process.AlignmentTrackSelector.etaMax  = 3.
-process.AlignmentTrackSelector.nHitMin = 10
+process.AlignmentTrackSelector.etaMin  = -2.4
+process.AlignmentTrackSelector.etaMax  = 2.4
+process.AlignmentTrackSelector.nHitMin = 8
+#process.AlignmentTrackSelector.nHitMin = 10
 process.AlignmentTrackSelector.nHitMin2D = 2
 process.AlignmentTrackSelector.chi2nMax = 999.
-process.AlignmentTrackSelector.applyMultiplicityFilter = True 
+process.AlignmentTrackSelector.applyMultiplicityFilter = True
+process.AlignmentTrackSelector.multiplicityOnInput = False
 process.AlignmentTrackSelector.minMultiplicity = 2
-process.AlignmentTrackSelector.maxMultiplicity = 2
-process.AlignmentTrackSelector.applyNHighestPt = False
-process.AlignmentTrackSelector.nHighestPt = 1
+process.AlignmentTrackSelector.maxMultiplicity = 30
+process.AlignmentTrackSelector.applyNHighestPt = True
+process.AlignmentTrackSelector.nHighestPt = 2
 process.AlignmentTrackSelector.seedOnlyFrom = 0
 process.AlignmentTrackSelector.applyIsolationCut = False
 process.AlignmentTrackSelector.minHitIsolation = 0.8
-process.AlignmentTrackSelector.applyChargeCheck = False 
+process.AlignmentTrackSelector.applyChargeCheck = False
 process.AlignmentTrackSelector.minHitChargeStrip = 30.
-
-process.AlignmentTrackSelector.TwoBodyDecaySelector.applyChargeFilter = True
-process.AlignmentTrackSelector.TwoBodyDecaySelector.charge = 0
-process.AlignmentTrackSelector.TwoBodyDecaySelector.applyMassrangeFilter = True
-process.AlignmentTrackSelector.TwoBodyDecaySelector.daughterMass = 0.105
-process.AlignmentTrackSelector.TwoBodyDecaySelector.minXMass = 85.8 
-process.AlignmentTrackSelector.TwoBodyDecaySelector.maxXMass = 95.8 
 
 process.AlignmentTrackSelector.minHitsPerSubDet   = cms.PSet(
          inTEC = cms.int32(0),
@@ -98,6 +94,13 @@ process.AlignmentTrackSelector.minHitsPerSubDet   = cms.PSet(
          inENDCAPminus = cms.int32(0),
      )
 
+process.AlignmentTrackSelector.TwoBodyDecaySelector.applyChargeFilter = True
+process.AlignmentTrackSelector.TwoBodyDecaySelector.charge = 0
+process.AlignmentTrackSelector.TwoBodyDecaySelector.applyMassrangeFilter = True
+process.AlignmentTrackSelector.TwoBodyDecaySelector.daughterMass = 0.105658
+process.AlignmentTrackSelector.TwoBodyDecaySelector.minXMass = 80.0
+process.AlignmentTrackSelector.TwoBodyDecaySelector.maxXMass = 100.0
+
 process.oneGoodVertexFilter = cms.EDFilter("VertexSelector",
                                            src = cms.InputTag("offlinePrimaryVertices"),
                                            cut = cms.string("!isFake && ndof > 4 && abs(z) <= 15 && position.Rho <= 2"), # tracksSize() > 3 for the older cut
@@ -106,5 +109,42 @@ process.oneGoodVertexFilter = cms.EDFilter("VertexSelector",
 
 
 
-process.TrackRefitter2 = process.TrackRefitter1.clone()
-process.TrackRefitter2.src = 'AlignmentTrackSelector'
+process.load("RecoTracker.TrackProducer.TwoBodyDecayMomConstraintProducer_cff")
+process.TwoBodyDecayMomConstraint.src = "AlignmentTrackSelector"
+process.load("RecoTracker.TrackProducer.TwoBodyDecayConstraintProducer_cff")
+process.TwoBodyDecayConstraint.src = "AlignmentTrackSelector"
+
+from TrackingTools.TrackFitters.KFFittingSmoother_cfi import KFFittingSmoother
+process.TwoBodyDecayTrackFitter = KFFittingSmoother.clone(
+    ComponentName = cms.string( "TwoBodyDecayTrackFitter" ),
+    Fitter = cms.string('RKFitter'),
+    Smoother = cms.string('RKSmoother'),
+    LogPixelProbabilityCut = cms.double(-15.0),
+    EstimateCut = cms.double(-1.0),
+)
+
+
+### Refitter using the regular MinBias config
+process.TrackRefitter2 = process.TrackRefitter1.clone(
+    src = "AlignmentTrackSelector"
+)
+### Refitter using the TwoBodyDecay momentum constraint
+process.TrackRefitter3 = process.TrackRefitter1.clone(
+    src = "AlignmentTrackSelector",
+    srcConstr = "TwoBodyDecayMomConstraint",
+    Fitter = cms.string('TwoBodyDecayTrackFitter'),
+    constraint = "momentum",
+    TrajectoryInEvent = True,
+    TTRHBuilder = "WithAngleAndTemplate",
+    NavigationSchool = ""
+)
+### Refitter using the full TwoBodyDecay constraint
+process.TrackRefitter4 = process.TrackRefitter1.clone(
+    src = "AlignmentTrackSelector",
+    srcConstr = "TwoBodyDecayConstraint",
+    Fitter = cms.string('TwoBodyDecayTrackFitter'),
+    constraint = "trackParameters",
+    TrajectoryInEvent = True
+#    TTRHBuilder = "WithAngleAndTemplate",
+#    NavigationSchool = ""
+)

@@ -698,33 +698,33 @@ bool HIPAlignmentAlgorithm::processHit2D(const AlignableDetOrUnitPtr& alidet,
 void HIPAlignmentAlgorithm::run(const edm::EventSetup& setup, const EventInfo &eventInfo)
 {
   if (isCollector) return;
-	
+
   TrajectoryStateCombiner tsoscomb;
-  
+
   // AM: not really needed
   // AM: m_Ntracks = 0 should be sufficient
   int itr=0;
   m_Ntracks=0;
-//CY : hit info  
+  //CY : hit info  
   m_sinTheta =0;
   m_angle = 0;
   m_detId =0;
   m_hitwt=1;
-	
+
   // AM: what is this needed for?
   //theFile->cd();
-	
+
   // loop over tracks  
   const ConstTrajTrackPairCollection &tracks = eventInfo.trajTrackPairs();
   for (ConstTrajTrackPairCollection::const_iterator it=tracks.begin();
-       it!=tracks.end();
-       ++it) {
+    it!=tracks.end();
+    ++it) {
 
-//CY: pre-selection
+    //CY: pre-selection
 
     const Trajectory* traj = (*it).first;
     const reco::Track* track = (*it).second;
-		
+
     float pt    = track->pt();
     float eta   = track->eta();
     float phi   = track->phi();
@@ -742,32 +742,35 @@ void HIPAlignmentAlgorithm::run(const edm::EventSetup& setup, const EventInfo &e
     int nhtec   = track->hitPattern().numberOfValidStripTECHits();
 
     if (verbose) edm::LogInfo("Alignment") << "New track pt,eta,phi,chi2n,hits: "
-					   << pt << ","
-					   << eta << ","
-					   << phi << ","
-					   << chi2n << ","
-					   << nhit;
+      << pt << ","
+      << eta << ","
+      << phi << ","
+      << chi2n << ","
+      << nhit;
 
-//CY: Pre-selection
+    //CY: Pre-selection
 
-        double ihitwt = 1;
-        double trkwt = 1;
-        //eta distribution from 2015 RunD, need to change formula for other runs
-        TFormula *my_formula = new TFormula("formula","2.51469/(2.51469+4.11684*x-16.7847*pow(x,2)+46.1574*pow(x,3)-55.22*pow(x,4)+29.5591*pow(x,5)-5.39816*pow(x,6))");
-        if(uniEta){ 
-        trkwt = Scale*(my_formula->Eval(fabs(eta)));}
-        else trkwt=Scale; 
+    double ihitwt = 1;
+    double trkwt = 1;
+    if (uniEta){
+      //eta distribution from 2015 RunD, need to change formula for other runs
+      TFormula *my_formula = new TFormula("formula", "2.51469/(2.51469+4.11684*x-16.7847*pow(x,2)+46.1574*pow(x,3)-55.22*pow(x,4)+29.5591*pow(x,5)-5.39816*pow(x,6))");
+      trkwt = Scale*(my_formula->Eval(fabs(eta)));
+      delete my_formula;
+    }
+    else trkwt=Scale;
 
-        if (trackPs){
-        double r = gRandom->Rndm();
-           if (trkwt < r){
-              //edm::LogWarning("Alignment") << "[HIPAlignmentAlgorithm::run]skip event, eta ="<<eta;
-              continue ;}
-        }
-        else if (trackWt){ihitwt=trkwt;}
+    if (trackPs){
+      double r = gRandom->Rndm();
+      if (trkwt < r){
+        //edm::LogWarning("Alignment") << "[HIPAlignmentAlgorithm::run]skip event, eta ="<<eta;
+        continue;
+      }
+    }
+    else if (trackWt){ ihitwt=trkwt; }
 
 
-  //edm::LogWarning("Alignment") << "UsingReweighting="<<trackWt<<",trkwt="<<trkwt<<",hitWt="<<ihitwt;
+    //edm::LogWarning("Alignment") << "UsingReweighting="<<trackWt<<",trkwt="<<trkwt<<",hitWt="<<ihitwt;
 
     // fill track parameters in root tree
     if (itr<MAXREC) {
@@ -790,120 +793,122 @@ void HIPAlignmentAlgorithm::run(const edm::EventSetup& setup, const EventInfo &e
       m_Ntracks=itr;
     }
     // AM: Can be simplified
-		
+
     std::vector<const TransientTrackingRecHit*> hitvec;
     std::vector<TrajectoryStateOnSurface> tsosvec;
-		
+
     // loop over measurements	
     std::vector<TrajectoryMeasurement> measurements = traj->measurements();
     for (std::vector<TrajectoryMeasurement>::iterator im=measurements.begin();
-	 im!=measurements.end();
-	 ++im) {
-   
+      im!=measurements.end();
+      ++im) {
+
       TrajectoryMeasurement meas = *im;
 
       // const TransientTrackingRecHit* ttrhit = &(*meas.recHit());
       // const TrackingRecHit *hit = ttrhit->hit();
       const TransientTrackingRecHit* hit = &(*meas.recHit());
 
-      if (hit->isValid() && theAlignableDetAccessor->detAndSubdetInMap( hit->geographicalId() )) {
+      if (hit->isValid() && theAlignableDetAccessor->detAndSubdetInMap(hit->geographicalId())) {
 
-	// this is the updated state (including the current hit)
-	// TrajectoryStateOnSurface tsos=meas.updatedState();
-	// combine fwd and bwd predicted state to get state 
-	// which excludes current hit
-	
-	//////////Hit prescaling part 	 
-	bool skiphit = false; 	 
-	if (eventInfo.clusterValueMap()) { 	 
-	  // check from the PrescalingMap if the hit was taken. 	 
-	  // If not skip to the next TM 	 
-	  // bool hitTaken=false; 	 
-	  AlignmentClusterFlag myflag; 	 
-	  
-	  int subDet = hit->geographicalId().subdetId();
-	  //take the actual RecHit out of the Transient one
-	  const TrackingRecHit *rechit=hit->hit();
-	  if (subDet>2) { // AM: if possible use enum instead of hard-coded value	 
-	    const std::type_info &type = typeid(*rechit); 	 
-	    
-	    if (type == typeid(SiStripRecHit1D)) { 	 
-	      
-	      const SiStripRecHit1D* stripHit1D = dynamic_cast<const SiStripRecHit1D*>(rechit); 	 
-	      if (stripHit1D) { 	 
-		SiStripRecHit1D::ClusterRef stripclust(stripHit1D->cluster()); 	 
-		// myflag=PrescMap[stripclust]; 	 
-		myflag = (*eventInfo.clusterValueMap())[stripclust]; 	 
-	      } else { 	 
-		edm::LogError("HIPAlignmentAlgorithm") 
-		  << "ERROR in <HIPAlignmentAlgorithm::run>: Dynamic cast of Strip RecHit failed! "
-		  << "TypeId of the RecHit: " << className(*hit) <<std::endl; 	 
-	      } 	 
-	      
-	    }//end if type = SiStripRecHit1D 	 
-	    else if(type == typeid(SiStripRecHit2D)){ 	 
-	      
-	      const SiStripRecHit2D* stripHit2D = dynamic_cast<const SiStripRecHit2D*>(rechit); 	 
-	      if (stripHit2D) { 	 
-		SiStripRecHit2D::ClusterRef stripclust(stripHit2D->cluster()); 	 
-		// myflag=PrescMap[stripclust]; 	 
-		myflag = (*eventInfo.clusterValueMap())[stripclust]; 	 
-	      } else { 	 
-		edm::LogError("HIPAlignmentAlgorithm") 
-		  << "ERROR in <HIPAlignmentAlgorithm::run>: Dynamic cast of Strip RecHit failed! "
-		  // << "TypeId of the TTRH: " << className(*ttrhit) << std::endl; 	 
-		  << "TypeId of the TTRH: " << className(*hit) << std::endl; 	 
-	      } 
-	    } //end if type == SiStripRecHit2D 	 
-	  } //end if hit from strips 	 
-	  else { 	 
-	    const SiPixelRecHit* pixelhit= dynamic_cast<const SiPixelRecHit*>(rechit); 	 
-	    if (pixelhit) { 	 
-	      SiPixelClusterRefNew  pixelclust(pixelhit->cluster()); 	 
-	      // myflag=PrescMap[pixelclust]; 	 
-	      myflag = (*eventInfo.clusterValueMap())[pixelclust]; 	 
-	    }
-	    else { 	 
-	      edm::LogError("HIPAlignmentAlgorithm")
-		<< "ERROR in <HIPAlignmentAlgorithm::run>: Dynamic cast of Pixel RecHit failed! "
-		// << "TypeId of the TTRH: " << className(*ttrhit) << std::endl; 	 
-		<< "TypeId of the TTRH: " << className(*hit) << std::endl; 	 
-	    }
-	  } //end 'else' it is a pixel hit 	 
-	    // bool hitTaken=myflag.isTaken(); 	 
-	  if (!myflag.isTaken()) { 	 
-	    skiphit=true;
-	    continue;
-	  }
-	}//end if Prescaled Hits 	 
-	//////////////////////////////// 	 
-	if (skiphit) { 	 
-	  throw cms::Exception("LogicError")
-	    << "ERROR  in <HIPAlignmentAlgorithm::run>: this hit should have been skipped!"
-	    << std::endl;	 
-	}
-	
-	TrajectoryStateOnSurface tsos = tsoscomb.combine(meas.forwardPredictedState(),
-							 meas.backwardPredictedState());
-	
-	if(tsos.isValid()){
-	  // hitvec.push_back(ttrhit);
-	  hitvec.push_back(hit);
-	  tsosvec.push_back(tsos);
-	}
+        // this is the updated state (including the current hit)
+        // TrajectoryStateOnSurface tsos=meas.updatedState();
+        // combine fwd and bwd predicted state to get state 
+        // which excludes current hit
+
+        //////////Hit prescaling part 	 
+        bool skiphit = false;
+        if (eventInfo.clusterValueMap()) {
+          // check from the PrescalingMap if the hit was taken. 	 
+          // If not skip to the next TM 	 
+          // bool hitTaken=false; 	 
+          AlignmentClusterFlag myflag;
+
+          int subDet = hit->geographicalId().subdetId();
+          //take the actual RecHit out of the Transient one
+          const TrackingRecHit *rechit=hit->hit();
+          if (subDet>2) { // AM: if possible use enum instead of hard-coded value	 
+            const std::type_info &type = typeid(*rechit);
+
+            if (type == typeid(SiStripRecHit1D)) {
+
+              const SiStripRecHit1D* stripHit1D = dynamic_cast<const SiStripRecHit1D*>(rechit);
+              if (stripHit1D) {
+                SiStripRecHit1D::ClusterRef stripclust(stripHit1D->cluster());
+                // myflag=PrescMap[stripclust]; 	 
+                myflag = (*eventInfo.clusterValueMap())[stripclust];
+              }
+              else {
+                edm::LogError("HIPAlignmentAlgorithm")
+                  << "ERROR in <HIPAlignmentAlgorithm::run>: Dynamic cast of Strip RecHit failed! "
+                  << "TypeId of the RecHit: " << className(*hit) <<std::endl;
+              }
+
+            }//end if type = SiStripRecHit1D 	 
+            else if (type == typeid(SiStripRecHit2D)){
+
+              const SiStripRecHit2D* stripHit2D = dynamic_cast<const SiStripRecHit2D*>(rechit);
+              if (stripHit2D) {
+                SiStripRecHit2D::ClusterRef stripclust(stripHit2D->cluster());
+                // myflag=PrescMap[stripclust]; 	 
+                myflag = (*eventInfo.clusterValueMap())[stripclust];
+              }
+              else {
+                edm::LogError("HIPAlignmentAlgorithm")
+                  << "ERROR in <HIPAlignmentAlgorithm::run>: Dynamic cast of Strip RecHit failed! "
+                  // << "TypeId of the TTRH: " << className(*ttrhit) << std::endl; 	 
+                  << "TypeId of the TTRH: " << className(*hit) << std::endl;
+              }
+            } //end if type == SiStripRecHit2D 	 
+          } //end if hit from strips 	 
+          else {
+            const SiPixelRecHit* pixelhit= dynamic_cast<const SiPixelRecHit*>(rechit);
+            if (pixelhit) {
+              SiPixelClusterRefNew  pixelclust(pixelhit->cluster());
+              // myflag=PrescMap[pixelclust]; 	 
+              myflag = (*eventInfo.clusterValueMap())[pixelclust];
+            }
+            else {
+              edm::LogError("HIPAlignmentAlgorithm")
+                << "ERROR in <HIPAlignmentAlgorithm::run>: Dynamic cast of Pixel RecHit failed! "
+                // << "TypeId of the TTRH: " << className(*ttrhit) << std::endl; 	 
+                << "TypeId of the TTRH: " << className(*hit) << std::endl;
+            }
+          } //end 'else' it is a pixel hit 	 
+          // bool hitTaken=myflag.isTaken(); 	 
+          if (!myflag.isTaken()) {
+            skiphit=true;
+            continue;
+          }
+        }//end if Prescaled Hits 	 
+        //////////////////////////////// 	 
+        if (skiphit) {
+          throw cms::Exception("LogicError")
+            << "ERROR  in <HIPAlignmentAlgorithm::run>: this hit should have been skipped!"
+            << std::endl;
+        }
+
+        TrajectoryStateOnSurface tsos = tsoscomb.combine(meas.forwardPredictedState(),
+          meas.backwardPredictedState());
+
+        if (tsos.isValid()){
+          // hitvec.push_back(ttrhit);
+          hitvec.push_back(hit);
+          tsosvec.push_back(tsos);
+        }
 
       } //hit valid
     }
-    
+
     // transform RecHit vector to AlignableDet vector
     std::vector <AlignableDetOrUnitPtr> alidetvec = theAlignableDetAccessor->alignablesFromHits(hitvec);
-		
+
     // get concatenated alignment parameters for list of alignables
     CompositeAlignmentParameters aap = theAlignmentParameterStore->selectParameters(alidetvec);
-		
+
     std::vector<TrajectoryStateOnSurface>::const_iterator itsos=tsosvec.begin();
     std::vector<const TransientTrackingRecHit*>::const_iterator ihit=hitvec.begin();
-    
+
     // loop over vectors(hit,tsos)
     while (itsos != tsosvec.end()) {
 
@@ -911,56 +916,57 @@ void HIPAlignmentAlgorithm::run(const edm::EventSetup& setup, const EventInfo &e
       const GeomDet* det = (*ihit)->det();
       // int subDet= (*ihit)->geographicalId().subdetId();
       uint32_t nhitDim = (*ihit)->dimension();
-      
+
       AlignableDetOrUnitPtr alidet = theAlignableDetAccessor->alignableFromGeomDet(det);
-			
+
       // get relevant Alignable
       Alignable* ali = aap.alignableFromAlignableDet(alidet);
-    
+
       if (ali!=0) {
 
-  const TrajectoryStateOnSurface & tsos=*itsos;
+        const TrajectoryStateOnSurface & tsos=*itsos;
 
-//  LocalVector v = tsos.localDirection();
-//  double proj_z = v.dot(LocalVector(0,0,1));
+        //  LocalVector v = tsos.localDirection();
+        //  double proj_z = v.dot(LocalVector(0,0,1));
 
-//In fact, sin_theta=Abs(mom_z)
-  double mom_x = tsos.localDirection().x();
-  double mom_y = tsos.localDirection().y();
-  double mom_z = tsos.localDirection().z();
-  double sin_theta = TMath::Abs(mom_z) / sqrt(pow(mom_x,2)+pow(mom_y,2)+pow(mom_z,2) );
-  double angle = TMath::ASin(sin_theta);
+        //In fact, sin_theta=Abs(mom_z)
+        double mom_x = tsos.localDirection().x();
+        double mom_y = tsos.localDirection().y();
+        double mom_z = tsos.localDirection().z();
+        double sin_theta = TMath::Abs(mom_z) / sqrt(pow(mom_x, 2)+pow(mom_y, 2)+pow(mom_z, 2));
+        double angle = TMath::ASin(sin_theta);
 
 
-//Make cut on hit impact angle, reduce collision hits perpendicular to modules
-  if(IsCollision)
-  { if (angle>col_cut)ihitwt=0;}
-  else
-  { if (angle<cos_cut)ihitwt=0;}
-  m_angle = angle;
-  m_sinTheta = sin_theta;
-  m_detId = ali->id();
-  m_hitwt = ihitwt;  
- 
- if (theFillTrackMonitoring) hitTree->Fill();
+        //Make cut on hit impact angle, reduce collision hits perpendicular to modules
+        if (IsCollision)
+        { if (angle>col_cut)ihitwt=0; }
+        else
+        { if (angle<cos_cut)ihitwt=0; }
+        m_angle = angle;
+        m_sinTheta = sin_theta;
+        m_detId = ali->id();
+        m_hitwt = ihitwt;
 
-	if ((nhitDim==1)&&(ihitwt!=0)) {
-	  processHit1D(alidet, ali, *itsos, *ihit, ihitwt);
-	} else if ((nhitDim==2)&&(ihitwt!=0)) {
-	  processHit2D(alidet, ali, *itsos, *ihit, ihitwt);
-	}
+        if (theFillTrackMonitoring) hitTree->Fill();
+
+        if ((nhitDim==1)&&(ihitwt!=0)) {
+          processHit1D(alidet, ali, *itsos, *ihit, ihitwt);
+        }
+        else if ((nhitDim==2)&&(ihitwt!=0)) {
+          processHit2D(alidet, ali, *itsos, *ihit, ihitwt);
+        }
       }
-			
+
       itsos++;
       ihit++;
-    } 
+    }
   } // end of track loop
-	
+
   // fill eventwise root tree (with prescale defined in pset)
   if (theFillTrackMonitoring) {
-     theCurrentPrescale--;
-     //edm::LogWarning("Alignment") << "[HIPAlignmentAlgorithm::run] theCurrentPrescale="<<theCurrentPrescale;
-     if (theCurrentPrescale<=0) {
+    theCurrentPrescale--;
+    //edm::LogWarning("Alignment") << "[HIPAlignmentAlgorithm::run] theCurrentPrescale="<<theCurrentPrescale;
+    if (theCurrentPrescale<=0) {
       theTree->Fill();
       theCurrentPrescale = theEventPrescale;
     }
@@ -1178,38 +1184,38 @@ void HIPAlignmentAlgorithm::fillRoot(const edm::EventSetup& iSetup)
 {
   using std::setw;
   theFile2->cd();
-	
+
   int naligned=0;
 
   //Retrieve tracker topology from geometry
   edm::ESHandle<TrackerTopology> tTopoHandle;
-//  iSetup.get<IdealGeometryRecord>().get(tTopoHandle);
-  iSetup.get<TrackerTopologyRcd>().get(tTopoHandle); 
+  //  iSetup.get<IdealGeometryRecord>().get(tTopoHandle);
+  iSetup.get<TrackerTopologyRcd>().get(tTopoHandle);
 
   const TrackerTopology* const tTopo = tTopoHandle.product();
-	
+
   for (std::vector<Alignable*>::const_iterator it=theAlignables.begin();
-       it!=theAlignables.end();
-       ++it) {
+    it!=theAlignables.end();
+    ++it) {
     Alignable* ali = (*it);
     AlignmentParameters* dap = ali->alignmentParameters();
-		
+
     // consider only those parameters classified as 'valid'
     if (dap->isValid()) {
-			
+
       // get number of hits from user variable
       HIPUserVariables* uservar = dynamic_cast<HIPUserVariables*>(dap->userVariables());
       m2_Nhit = uservar->nhit;
-			
+
       // get type/layer
-      std::pair<int,int> tl = theAlignmentParameterStore->typeAndLayer(ali, tTopo);
+      std::pair<int, int> tl = theAlignmentParameterStore->typeAndLayer(ali, tTopo);
       m2_Type = tl.first;
       m2_Layer = tl.second;
-			
+
       // get identifier (as for IO)
       m2_Id    = ali->id();
       m2_ObjId = ali->alignableObjectId();
-			
+
       // get position
       GlobalPoint pos = ali->surface().position();
       m2_Xpos = pos.x();
@@ -1217,38 +1223,38 @@ void HIPAlignmentAlgorithm::fillRoot(const edm::EventSetup& iSetup)
       m2_Zpos = pos.z();
       m2_Eta = pos.eta();
       m2_Phi = pos.phi();
-			
+
       AlgebraicVector pars = dap->parameters();
-			
+
       if (verbose) {
-	edm::LogVerbatim("Alignment")
-	  << "------------------------------------------------------------------------\n"
-	  << " ALIGNABLE: " << setw(6) << naligned
-	  << '\n'
-	  << "hits: "   << setw(4) << m2_Nhit
-	  << " type: "  << setw(4) << m2_Type
-	  << " layer: " << setw(4) << m2_Layer
-	  << " id: "    << setw(4) << m2_Id
-	  << " objId: " << setw(4) << m2_ObjId
-	  << '\n'
-	  << std::fixed << std::setprecision(5)
-	  << "x,y,z: "
-	  << setw(12) << m2_Xpos
-	  << setw(12) << m2_Ypos 
-	  << setw(12) << m2_Zpos
-	  << " eta,phi: "
-	  << setw(12) << m2_Eta
-	  << setw(12) << m2_Phi
-	  << '\n'
-	  << "params: "
-	  << setw(12) << pars[0]
-	  << setw(12) << pars[1]
-	  << setw(12) << pars[2]
-	  << setw(12) << pars[3]
-	  << setw(12) << pars[4]
-	  << setw(12) << pars[5];
+        edm::LogVerbatim("Alignment")
+          << "------------------------------------------------------------------------\n"
+          << " ALIGNABLE: " << setw(6) << naligned
+          << '\n'
+          << "hits: "   << setw(4) << m2_Nhit
+          << " type: "  << setw(4) << m2_Type
+          << " layer: " << setw(4) << m2_Layer
+          << " id: "    << setw(4) << m2_Id
+          << " objId: " << setw(4) << m2_ObjId
+          << '\n'
+          << std::fixed << std::setprecision(5)
+          << "x,y,z: "
+          << setw(12) << m2_Xpos
+          << setw(12) << m2_Ypos
+          << setw(12) << m2_Zpos
+          << " eta,phi: "
+          << setw(12) << m2_Eta
+          << setw(12) << m2_Phi
+          << '\n'
+          << "params: "
+          << setw(12) << pars[0]
+          << setw(12) << pars[1]
+          << setw(12) << pars[2]
+          << setw(12) << pars[3]
+          << setw(12) << pars[4]
+          << setw(12) << pars[5];
       }
-      
+
       naligned++;
       theTree2->Fill();
     }
@@ -1257,7 +1263,7 @@ void HIPAlignmentAlgorithm::fillRoot(const edm::EventSetup& iSetup)
 
 // ----------------------------------------------------------------------------
 
-bool HIPAlignmentAlgorithm::calcParameters(Alignable* ali , int setDet, double start, double step)
+bool HIPAlignmentAlgorithm::calcParameters(Alignable* ali, int setDet, double start, double step)
 {
   // Alignment parameters
   AlignmentParameters* par = ali->alignmentParameters();
@@ -1268,18 +1274,18 @@ bool HIPAlignmentAlgorithm::calcParameters(Alignable* ali , int setDet, double s
   // matrix shrinkage and expansion
   // int hitdim = uservar->hitdim;
 
-   edm::LogWarning("Alignment") << "Processing Detector"<<ali->id() ;
- 
-  if ( (setDet==0) && (nhit < theMinimumNumberOfHits)) {
+  edm::LogWarning("Alignment") << "Processing Detector"<<ali->id();
+
+  if ((setDet==0) && (nhit < theMinimumNumberOfHits)) {
     par->setValid(false);
-   edm::LogWarning("Alignment") << "nhit="<<nhit<<" too small,skip!" ;
+    edm::LogWarning("Alignment") << "nhit="<<nhit<<" too small,skip!";
     return false;
   }
 
   AlgebraicSymMatrix jtvj = uservar->jtvj;
   AlgebraicVector jtve = uservar->jtve;
 
-  
+
   // these are the alignment corrections+covariance (for selected params)
 
 
@@ -1288,53 +1294,53 @@ bool HIPAlignmentAlgorithm::calcParameters(Alignable* ali , int setDet, double s
   AlgebraicVector paramerr(npar);
   AlgebraicSymMatrix cov(npar*npar);
 
-   if (setDet!=0) {
-      if (params.num_row()!=1){
+  if (setDet!=0) {
+    if (params.num_row()!=1){
       edm::LogError("Alignment") << "For scanning, please only turn on one parameter! check common_cff_py.txt";
       return false;
-      }      
-      if (theIteration==1) params[0] = start;
-      else params[0]=step;
     }
+    if (theIteration==1) params[0] = start;
+    else params[0]=step;
+  }
 
-//  edm::LogWarning("Alignment") << "parameters " << params;
-	
+  //  edm::LogWarning("Alignment") << "parameters " << params;
+
   // errors of parameters
 
- if (setDet==0){
-  int ierr;
-  AlgebraicSymMatrix jtvjinv = jtvj.inverse(ierr);
+  if (setDet==0){
+    int ierr;
+    AlgebraicSymMatrix jtvjinv = jtvj.inverse(ierr);
 
-  if (ierr !=0) {
-    edm::LogError("Alignment") << "Matrix inversion failed!";
-    return false;
-  }
-  params = - (jtvjinv * jtve);
-  cov = jtvjinv;
+    if (ierr !=0) {
+      edm::LogError("Alignment") << "Matrix inversion failed!";
+      return false;
+    }
+    params = -(jtvjinv * jtve);
+    cov = jtvjinv;
 
-//  edm::LogWarning("Alignment") << "[HIPAlignmentAlgorithm::CalcParameters]: parameters before RelErrCut= " << params;
-//  edm::LogWarning("Alignment") << "[HIPAlignmentAlgorithm::CalcParameters]: cov= " << cov;
-  AlgebraicVector relerr(npar);
-  for (int i=0;i<npar;i++) {
-    if (fabs(cov[i][i])>0) paramerr[i] = sqrt(fabs(cov[i][i]));
-    else paramerr[i] = params[i];
-    if (params[i]!=0) relerr[i] = fabs(paramerr[i]/params[i]);
-    else relerr[i]=0;
-    if (relerr[i] >= theMaxRelParameterError) { 
-//   edm::LogWarning("Alignment") << "RelError="<<relerr[i]<<"too large!" ;
-    params[i] = 0; 
-    paramerr[i]=0; 
-     }
+    //  edm::LogWarning("Alignment") << "[HIPAlignmentAlgorithm::CalcParameters]: parameters before RelErrCut= " << params;
+    //  edm::LogWarning("Alignment") << "[HIPAlignmentAlgorithm::CalcParameters]: cov= " << cov;
+    AlgebraicVector relerr(npar);
+    for (int i=0; i<npar; i++) {
+      if (fabs(cov[i][i])>0) paramerr[i] = sqrt(fabs(cov[i][i]));
+      else paramerr[i] = params[i];
+      if (params[i]!=0) relerr[i] = fabs(paramerr[i]/params[i]);
+      else relerr[i]=0;
+      if (relerr[i] >= theMaxRelParameterError) {
+        //   edm::LogWarning("Alignment") << "RelError="<<relerr[i]<<"too large!" ;
+        params[i] = 0;
+        paramerr[i]=0;
+      }
     }
   }
 
   if (setDet!=0)
-  edm::LogWarning("Alignment") << "[HIPAlignmentAlgorithm::CalcParameters]: parameters = " << params;
+    edm::LogWarning("Alignment") << "[HIPAlignmentAlgorithm::CalcParameters]: parameters = " << params;
 
   uservar->alipar=params;
   uservar->alierr=paramerr;
 
-  AlignmentParameters* parnew = par->cloneFromSelected(params,cov);
+  AlignmentParameters* parnew = par->cloneFromSelected(params, cov);
   ali->setAlignmentParameters(parnew);
   parnew->setValid(true);
 
@@ -1346,69 +1352,69 @@ bool HIPAlignmentAlgorithm::calcParameters(Alignable* ali , int setDet, double s
 void HIPAlignmentAlgorithm::collector(void)
 {
   edm::LogWarning("Alignment") << "[HIPAlignmentAlgorithm::collector] called for iteration "
-			       << theIteration << std::endl;
-	
+    << theIteration << std::endl;
+
   HIPUserVariablesIORoot HIPIO;
 
-	
-  for (int ijob=1;ijob<=theCollectorNJobs;ijob++) {
-		
+
+  for (int ijob=1; ijob<=theCollectorNJobs; ijob++) {
+
     edm::LogWarning("Alignment") << "reading uservar for job " << ijob;
-    
+
     std::stringstream ss;
     std::string str;
     ss << ijob;
     ss >> str;
     std::string uvfile = theCollectorPath+"/job"+str+"/IOUserVariables.root";
-		
-    std::vector<AlignmentUserVariables*> uvarvec = 
+
+    std::vector<AlignmentUserVariables*> uvarvec =
       HIPIO.readHIPUserVariables(theAlignables, uvfile.c_str(),
-				 theIteration, ioerr);
-    
-    if (ioerr!=0) { 
-      edm::LogWarning("Alignment") << "[HIPAlignmentAlgorithm::collector] could not read user variable files for job " 
-				   << ijob;
+      theIteration, ioerr);
+
+    if (ioerr!=0) {
+      edm::LogWarning("Alignment") << "[HIPAlignmentAlgorithm::collector] could not read user variable files for job "
+        << ijob;
       continue;
     }
-		
+
     // add
     std::vector<AlignmentUserVariables*> uvarvecadd;
-    std::vector<AlignmentUserVariables*>::const_iterator iuvarnew=uvarvec.begin(); 
-    for (std::vector<Alignable*>::const_iterator it=theAlignables.begin(); 
-	 it!=theAlignables.end();
-	 ++it) {
+    std::vector<AlignmentUserVariables*>::const_iterator iuvarnew=uvarvec.begin();
+    for (std::vector<Alignable*>::const_iterator it=theAlignables.begin();
+      it!=theAlignables.end();
+      ++it) {
       Alignable* ali = *it;
       AlignmentParameters* ap = ali->alignmentParameters();
-			
+
       HIPUserVariables* uvarold = dynamic_cast<HIPUserVariables*>(ap->userVariables());
       HIPUserVariables* uvarnew = dynamic_cast<HIPUserVariables*>(*iuvarnew);
-			
+
       HIPUserVariables* uvar = uvarold->clone();
       if (uvarnew!=0) {
-      //edm::LogWarning("Alignment") << "[collector-job"<<ijob<<"]alignables:old_nhit:"<<(uvarold->nhit)<<" new_nhit:"<<(uvarnew->nhit);
+        //edm::LogWarning("Alignment") << "[collector-job"<<ijob<<"]alignables:old_nhit:"<<(uvarold->nhit)<<" new_nhit:"<<(uvarnew->nhit);
 
         uvar->nhit = (uvarold->nhit)+(uvarnew->nhit);
         uvar->jtvj = (uvarold->jtvj)+(uvarnew->jtvj);
         uvar->jtve = (uvarold->jtve)+(uvarnew->jtve);
         uvar->alichi2 = (uvarold->alichi2)+(uvarnew->alichi2);
         uvar->alindof = (uvarold->alindof)+(uvarnew->alindof);
-	delete uvarnew;
+        delete uvarnew;
       }
-			
+
       uvarvecadd.push_back(uvar);
       iuvarnew++;
     }
-    
+
     theAlignmentParameterStore->attachUserVariables(theAlignables, uvarvecadd, ioerr);
-		
+
     //fill Eventwise Tree
     if (theFillTrackMonitoring) {
       uvfile = theCollectorPath+"/job"+str+"/HIPAlignmentEvents.root";
       edm::LogWarning("Alignment") << "Added to the tree "
-				   << fillEventwiseTree(uvfile.c_str(), theIteration, ioerr)
-				   << "tracks";
+        << fillEventwiseTree(uvfile.c_str(), theIteration, ioerr)
+        << "tracks";
     }
-		
+
   }//end loop on jobs
 }
 
