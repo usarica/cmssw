@@ -524,7 +524,7 @@ AlignmentProducer::duringLoop( const edm::Event& event,
     }
   } else {
     edm::LogError("Alignment") << "@SUB=AlignmentProducer::duringLoop" 
-			       << "No track collection found: skipping event";
+      << "No track collection " << tjTkAssociationMapTag_.encode() << " found: skipping event";
   }
   
 
