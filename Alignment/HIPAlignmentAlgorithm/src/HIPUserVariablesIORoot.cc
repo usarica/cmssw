@@ -64,7 +64,7 @@ void HIPUserVariablesIORoot::setBranchAddresses(void){
 
 int HIPUserVariablesIORoot::findEntry(unsigned int detId, int comp){
   if (newopen) { // we're here for the first time
-    edm::LogInfo("Alignment") << "[HIPUserVariablesIORoot::findEntry] fill map ...";
+    edm::LogInfo("HIPUserVariablesIORoot") << "[HIPUserVariablesIORoot::findEntry] fill map ...";
     treemap.erase(treemap.begin(), treemap.end());
     for (int ev=0; ev<tree->GetEntries(); ev++) {
       tree->GetEntry(ev);
@@ -93,7 +93,7 @@ int HIPUserVariablesIORoot::findEntry(unsigned int detId, int comp){
 int HIPUserVariablesIORoot::writeOne(Alignable* ali){
   AlignmentParameters* ap=ali->alignmentParameters();
   if ((ap->userVariables())==0) {
-    edm::LogError("Alignment") << "UserVariables not found!";
+    edm::LogError("HIPUserVariablesIORoot") << "UserVariables not found!";
     return -1;
   }
 
