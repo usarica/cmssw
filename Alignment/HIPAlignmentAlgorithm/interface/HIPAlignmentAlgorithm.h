@@ -18,11 +18,10 @@ class AlignableNavigator;
 class TFile;
 class TTree;
 
-class HIPAlignmentAlgorithm : public AlignmentAlgorithmBase
-{
+class HIPAlignmentAlgorithm : public AlignmentAlgorithmBase{
 
- public:
-  
+public:
+
   /// Constructor
   HIPAlignmentAlgorithm(const edm::ParameterSet& cfg);
 
@@ -30,9 +29,9 @@ class HIPAlignmentAlgorithm : public AlignmentAlgorithmBase
   ~HIPAlignmentAlgorithm() {};
 
   /// Call at beginning of job
-  void initialize( const edm::EventSetup& setup, 
-                   AlignableTracker* tracker, AlignableMuon* muon, AlignableExtras* extras, 
-                   AlignmentParameterStore* store);
+  void initialize(const edm::EventSetup& setup,
+    AlignableTracker* tracker, AlignableMuon* muon, AlignableExtras* extras,
+    AlignmentParameterStore* store);
 
   /// Call at end of job
   void terminate(const edm::EventSetup& setup);
@@ -43,21 +42,23 @@ class HIPAlignmentAlgorithm : public AlignmentAlgorithmBase
   /// Run the algorithm
   void run(const edm::EventSetup& setup, const EventInfo &eventInfo);
 
- private:
+private:
 
-  // private member functions
-  
-  bool processHit1D(const AlignableDetOrUnitPtr& alidet,
-		    const Alignable* ali,
-		    const TrajectoryStateOnSurface & tsos,
-		    const TrackingRecHit* hit,
-                    double hitwt);
+  bool processHit1D(
+    const AlignableDetOrUnitPtr& alidet,
+    const Alignable* ali,
+    const TrajectoryStateOnSurface & tsos,
+    const TrackingRecHit* hit,
+    double hitwt
+    );
 
-  bool processHit2D(const AlignableDetOrUnitPtr& alidet,
-		    const Alignable* ali,
-		    const TrajectoryStateOnSurface & tsos,
-		    const TrackingRecHit* hit,
-                    double hitwt);  
+  bool processHit2D(
+    const AlignableDetOrUnitPtr& alidet,
+    const Alignable* ali,
+    const TrajectoryStateOnSurface & tsos,
+    const TrackingRecHit* hit,
+    double hitwt
+    );
 
   int readIterationFile(std::string filename);
   void writeIterationFile(std::string filename, int iter);
@@ -65,10 +66,11 @@ class HIPAlignmentAlgorithm : public AlignmentAlgorithmBase
   double calcAPE(double* par, int iter, double function);
   void bookRoot(void);
   void fillRoot(const edm::EventSetup& setup);
-  bool calcParameters(Alignable* ali,int setDet, double start, double step);
+  bool calcParameters(Alignable* ali, int setDet, double start, double step);
   void collector(void);
-  int  fillEventwiseTree(const char *filename, int iter, int ierr);
-  // private data members
+  int fillEventwiseTree(const char *filename, int iter, int ierr);
+
+  // data members
 
   AlignmentParameterStore* theAlignmentParameterStore;
   std::vector<Alignable*> theAlignables;
@@ -83,14 +85,14 @@ class HIPAlignmentAlgorithm : public AlignmentAlgorithmBase
   // verbosity flag
   bool verbose;
   // names of IO root files
-  std::string outfile,outfile2,outpath,suvarfile,sparameterfile;
-  std::string struefile,smisalignedfile,salignedfile,siterationfile,ssurveyfile;
+  std::string outfile, outfile2, outpath, suvarfile, sparameterfile;
+  std::string struefile, smisalignedfile, salignedfile, siterationfile, ssurveyfile;
 
   // alignment position error parameters
   bool theApplyAPE;
   bool themultiIOV;
   std::vector<edm::ParameterSet> theAPEParameterSet;
-	std::vector<unsigned> theIOVrangeSet;
+  std::vector<unsigned> theIOVrangeSet;
   std::vector<std::pair<std::vector<Alignable*>, std::vector<double> > > theAPEParameters;
   // max allowed pull (residual / uncertainty) on a hit used in alignment
   double theMaxAllowedHitPull;
@@ -102,9 +104,9 @@ class HIPAlignmentAlgorithm : public AlignmentAlgorithmBase
   bool isCollector;
   int theCollectorNJobs;
   std::string theCollectorPath;
-  int theEventPrescale,theCurrentPrescale;
-  bool trackPs,trackWt,IsCollision,uniEta;
-  double Scale,cos_cut,col_cut;
+  int theEventPrescale, theCurrentPrescale;
+  bool trackPs, trackWt, IsCollision, uniEta;
+  double Scale, cos_cut, col_cut;
   bool theFillTrackMonitoring;
   std::vector<double> SetScanDet;
 
@@ -120,18 +122,18 @@ class HIPAlignmentAlgorithm : public AlignmentAlgorithmBase
   TTree* theTree3; // survey tree
 
   // variables for event-wise tree
-  static const int MAXREC = 99;
+  enum{ MAXREC = 99 };
   //int m_Run,m_Event;
-  int m_Ntracks,m_Nhits[MAXREC],m_nhPXB[MAXREC],m_nhPXF[MAXREC],m_nhTIB[MAXREC],m_nhTOB[MAXREC],m_nhTID[MAXREC],m_nhTEC[MAXREC];
-  float m_Pt[MAXREC],m_Eta[MAXREC],m_Phi[MAXREC],m_Chi2n[MAXREC],m_P[MAXREC],m_d0[MAXREC],m_dz[MAXREC],m_wt[MAXREC];
+  int m_Ntracks, m_Nhits[MAXREC], m_nhPXB[MAXREC], m_nhPXF[MAXREC], m_nhTIB[MAXREC], m_nhTOB[MAXREC], m_nhTID[MAXREC], m_nhTEC[MAXREC];
+  float m_Pt[MAXREC], m_Eta[MAXREC], m_Phi[MAXREC], m_Chi2n[MAXREC], m_P[MAXREC], m_d0[MAXREC], m_dz[MAXREC], m_wt[MAXREC];
 
   // variables for hit-wise tree
-  float m_sinTheta,m_hitwt,m_angle;
+  float m_sinTheta, m_hitwt, m_angle;
   align::ID m_detId;
 
   // variables for alignable-wise tree
-  int m2_Nhit,m2_Type,m2_Layer;
-  float m2_Xpos, m2_Ypos, m2_Zpos, m2_Eta, m2_Phi; 
+  int m2_Nhit, m2_Type, m2_Layer;
+  float m2_Xpos, m2_Ypos, m2_Zpos, m2_Eta, m2_Phi;
   align::ID m2_Id;
   align::StructureType m2_ObjId;
 

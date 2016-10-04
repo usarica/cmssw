@@ -52,42 +52,41 @@
 //
 // class decleration
 //
+class LhcTrackAnalyzer : public edm::EDAnalyzer{
 
-class LhcTrackAnalyzer : public edm::EDAnalyzer {
-
- public:
+public:
   explicit LhcTrackAnalyzer(const edm::ParameterSet&);
   ~LhcTrackAnalyzer();
 
- private:
-  virtual void beginJob() ;
+private:
+  virtual void beginJob();
   virtual void analyze(const edm::Event&, const edm::EventSetup&);
-  virtual void endJob() ;
+  virtual void endJob();
 
   // ----------member data ---------------------------
-  edm::InputTag  TrackCollectionTag_;
-  edm::InputTag  PVtxCollectionTag_;
+  edm::InputTag TrackCollectionTag_;
+  edm::InputTag PVtxCollectionTag_;
   bool debug_;
-  
+
   // Output
-  std::string filename_;     
+  std::string filename_;
   TFile* rootFile_;
   TTree* rootTree_;
-  
+
   // Root-Tuple variables :
   //=======================
-  void SetVarToZero();  
+  void SetVarToZero();
 
   static const int nMaxtracks_ = 3000;
   int nTracks_;
   int run_;
   int event_;
-  double pt_[nMaxtracks_];           
+  double pt_[nMaxtracks_];
   double eta_[nMaxtracks_];
   double phi_[nMaxtracks_];
   double chi2_[nMaxtracks_];
   double chi2ndof_[nMaxtracks_];
-  int    charge_[nMaxtracks_];
+  int charge_[nMaxtracks_];
   double qoverp_[nMaxtracks_];
   double dz_[nMaxtracks_];
   double dxy_[nMaxtracks_];
