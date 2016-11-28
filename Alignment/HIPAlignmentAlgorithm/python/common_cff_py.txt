@@ -27,7 +27,7 @@ process.load("Alignment.CommonAlignmentProducer.AlignmentProducer_cff")
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 
 
-process.GlobalTag.globaltag = "80X_dataRun2_Prompt_v11_forReRecoTkStudies"
+process.GlobalTag.globaltag = "80X_dataRun2_Prompt_v15_forTkAlNovCamp_multiIOV_v1"
 
 
 process.load("FWCore.MessageService.MessageLogger_cfi")
@@ -38,7 +38,7 @@ from CondCore.CondDB.CondDB_cfi import *
 
 #process.GlobalTag.toGet = cms.VPSet(
 #    cms.PSet(record = cms.string('TrackerAlignmentRcd'),
-#             tag = cms.string('TrackerAlignment_Run2016A_PseudoPCL_v1'),
+#             tag = cms.string('TrackerAlignment_misalignment_multiIOV_SG_EOY16'),
 #             connect = cms.string('frontier://FrontierProd/CMS_CONDITIONS')
 #             ),
 #
@@ -79,15 +79,15 @@ process.AlignmentProducer.algoConfig.fillTrackMonitoring=False
 
 process.AlignmentProducer.ParameterBuilder.Selector = cms.PSet(
     alignParams = cms.vstring(
-        'TrackerTPBHalfBarrel,111111',
-        'TrackerTPEHalfCylinder,111111',
+#        'TrackerTPBHalfBarrel,111111',
+#        'TrackerTPEHalfCylinder,111111',
 #        'TrackerTIBHalfBarrel,111111',
 #        'TrackerTOBHalfBarrel,111111',
 #        'TrackerTIDEndcap,111111',
 #        'TrackerTECEndcap,111111',
 
-#      'TrackerTPBModule,101101',
-#      'TrackerTPEModule,111111',
+      'TrackerTPBModule,101101',
+      'TrackerTPEModule,111111',
 
 # Do either one of these, use Module usually
 #      'TrackerTIBModuleUnit,101111',
@@ -95,10 +95,10 @@ process.AlignmentProducer.ParameterBuilder.Selector = cms.PSet(
 #      'TrackerTIDModuleUnit,111111',
 #      'TrackerTECModuleUnit,111111'
 
-#      'TrackerTIBModule,101111',
-#      'TrackerTOBModule,101111',
-#      'TrackerTIDModule,110111',
-#      'TrackerTECModule,110111'
+      'TrackerTIBModule,101111',
+      'TrackerTOBModule,101111',
+      'TrackerTIDModule,110111',
+      'TrackerTECModule,110111'
 
 #      'TrackerTPBLadder,111111',
 #      'TrackerTPEPanel,111111',
