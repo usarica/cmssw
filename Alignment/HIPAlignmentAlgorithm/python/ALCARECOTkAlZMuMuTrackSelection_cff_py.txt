@@ -3,13 +3,6 @@ process.maxEvents = cms.untracked.PSet(
     #input = cms.untracked.int32(50000)
 )
 
-import RecoTracker.TrackProducer.TrackRefitters_cff
-process.TrackRefitter1 = RecoTracker.TrackProducer.TrackRefitter_cfi.TrackRefitter.clone()
-process.TrackRefitter1.src = 'initialAlignmentTrackSelector'
-process.TrackRefitter1.NavigationSchool = ''
-process.TrackRefitter1.TTRHBuilder = 'WithAngleAndTemplate'
-process.TrackRefitter1.TrajectoryInEvent = True
-
 import Alignment.CommonAlignmentProducer.AlignmentTrackSelector_cfi
 process.initialAlignmentTrackSelector = Alignment.CommonAlignmentProducer.AlignmentTrackSelector_cfi.AlignmentTrackSelector.clone(
     applyBasicCuts = True,
@@ -18,6 +11,13 @@ process.initialAlignmentTrackSelector = Alignment.CommonAlignmentProducer.Alignm
     trackQualities = ["highPurity"],
     pMin = 4.
     )
+
+import RecoTracker.TrackProducer.TrackRefitters_cff
+process.TrackRefitter1 = RecoTracker.TrackProducer.TrackRefitter_cfi.TrackRefitter.clone()
+process.TrackRefitter1.src = 'initialAlignmentTrackSelector'
+process.TrackRefitter1.NavigationSchool = ''
+process.TrackRefitter1.TTRHBuilder = 'WithAngleAndTemplate'
+process.TrackRefitter1.TrajectoryInEvent = True
 
 # parameters for alignmentHitFilter
 process.load("RecoTracker.FinalTrackSelectors.TrackerTrackHitFilter_cff")
@@ -48,11 +48,8 @@ process.load("Alignment.CommonAlignmentProducer.AlignmentTrackSelector_cfi")
 process.AlignmentTrackSelector.src = 'ctfProducerCustomised'
 process.AlignmentTrackSelector.filter = True
 process.AlignmentTrackSelector.applyBasicCuts = True
-process.AlignmentTrackSelector.pMin    = 8.0
-#process.AlignmentTrackSelector.ptMin   = 1.0
+process.AlignmentTrackSelector.pMin    = 0.0
 process.AlignmentTrackSelector.ptMin   = 10.0
-#process.AlignmentTrackSelector.pMin    = 4.0 #0T collision
-#process.AlignmentTrackSelector.ptMin   = 0.0 #0T collision
 #process.AlignmentTrackSelector.dzMin   = -20.
 #process.AlignmentTrackSelector.dzMax   = 20.
 process.AlignmentTrackSelector.d0Min   = -50.
@@ -60,14 +57,13 @@ process.AlignmentTrackSelector.d0Max   = 50.
 process.AlignmentTrackSelector.etaMin  = -2.4
 process.AlignmentTrackSelector.etaMax  = 2.4
 process.AlignmentTrackSelector.nHitMin = 8
-#process.AlignmentTrackSelector.nHitMin = 10
 process.AlignmentTrackSelector.nHitMin2D = 2
 process.AlignmentTrackSelector.chi2nMax = 999.
 process.AlignmentTrackSelector.applyMultiplicityFilter = True
 process.AlignmentTrackSelector.multiplicityOnInput = False
 process.AlignmentTrackSelector.minMultiplicity = 2
 process.AlignmentTrackSelector.maxMultiplicity = 30
-process.AlignmentTrackSelector.applyNHighestPt = True
+process.AlignmentTrackSelector.applyNHighestPt = False
 process.AlignmentTrackSelector.nHighestPt = 2
 process.AlignmentTrackSelector.seedOnlyFrom = 0
 process.AlignmentTrackSelector.applyIsolationCut = False
@@ -101,18 +97,32 @@ process.AlignmentTrackSelector.TwoBodyDecaySelector.daughterMass = 0.105658
 process.AlignmentTrackSelector.TwoBodyDecaySelector.minXMass = 80.0
 process.AlignmentTrackSelector.TwoBodyDecaySelector.maxXMass = 100.0
 
-process.oneGoodVertexFilter = cms.EDFilter("VertexSelector",
-                                           src = cms.InputTag("offlinePrimaryVertices"),
-                                           cut = cms.string("!isFake && ndof > 4 && abs(z) <= 15 && position.Rho <= 2"), # tracksSize() > 3 for the older cut
-                                           filter = cms.bool(True),   # otherwise it won't filter the events, just produce an empty vertex collection.
-                                           )
+#process.oneGoodVertexFilter = cms.EDFilter("VertexSelector",
+#                                           src = cms.InputTag("offlinePrimaryVertices"),
+#                                           cut = cms.string("!isFake && ndof > 4 && abs(z) <= 15 && position.Rho <= 2"), # tracksSize() > 3 for the older cut
+#                                           filter = cms.bool(True),   # otherwise it won't filter the events, just produce an empty vertex collection.
+#                                           )
 
 
 
 process.load("RecoTracker.TrackProducer.TwoBodyDecayMomConstraintProducer_cff")
 process.TwoBodyDecayMomConstraint.src = "AlignmentTrackSelector"
+process.TwoBodyDecayMomConstraint.primaryMass = cms.double(91.1876)
+process.TwoBodyDecayMomConstraint.primaryWidth = cms.double(1.4)
+#process.TwoBodyDecayMomConstraint.primaryWidth = cms.double(2.4952)
+#process.TwoBodyDecayMomConstraint.sigmaPositionCut = cms.double(0.07)
+process.TwoBodyDecayMomConstraint.rescaleError = cms.double(1.0)
+process.TwoBodyDecayMomConstraint.chi2Cut = cms.double(5.)
+#process.TwoBodyDecayMomConstraint.EstimatorParameters.RobustificationConstant = cms.double(1.0)
 process.load("RecoTracker.TrackProducer.TwoBodyDecayConstraintProducer_cff")
 process.TwoBodyDecayConstraint.src = "AlignmentTrackSelector"
+process.TwoBodyDecayConstraint.primaryMass = cms.double(91.1876)
+process.TwoBodyDecayConstraint.primaryWidth = cms.double(1.4)
+#process.TwoBodyDecayConstraint.primaryWidth = cms.double(2.4952)
+#process.TwoBodyDecayConstraint.sigmaPositionCut = cms.double(0.07)
+process.TwoBodyDecayConstraint.rescaleError = cms.double(1.0)
+process.TwoBodyDecayConstraint.chi2Cut = cms.double(5.)
+#process.TwoBodyDecayConstraint.EstimatorParameters.RobustificationConstant = cms.double(1.0)
 
 from TrackingTools.TrackFitters.KFFittingSmoother_cfi import KFFittingSmoother
 process.TwoBodyDecayTrackFitter = KFFittingSmoother.clone(
@@ -122,7 +132,6 @@ process.TwoBodyDecayTrackFitter = KFFittingSmoother.clone(
     LogPixelProbabilityCut = cms.double(-15.0),
     EstimateCut = cms.double(-1.0),
 )
-
 
 ### Refitter using the regular MinBias config
 process.TrackRefitter2 = process.TrackRefitter1.clone(
@@ -144,7 +153,7 @@ process.TrackRefitter4 = process.TrackRefitter1.clone(
     srcConstr = "TwoBodyDecayConstraint",
     Fitter = cms.string('TwoBodyDecayTrackFitter'),
     constraint = "trackParameters",
-    TrajectoryInEvent = True
-#    TTRHBuilder = "WithAngleAndTemplate",
-#    NavigationSchool = ""
+    TrajectoryInEvent = True,
+    TTRHBuilder = "WithAngleAndTemplate",
+    NavigationSchool = ""
 )
