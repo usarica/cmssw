@@ -40,7 +40,7 @@ public:
   void startNewLoop(void);
 
   /// Run the algorithm
-  void run(const edm::EventSetup& setup, const EventInfo &eventInfo);
+  void run(const edm::EventSetup& setup, const EventInfo& eventInfo);
 
 private:
 

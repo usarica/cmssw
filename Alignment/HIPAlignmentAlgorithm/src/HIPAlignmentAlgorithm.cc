@@ -357,7 +357,7 @@ void HIPAlignmentAlgorithm::terminate(const edm::EventSetup& iSetup){
     bool test = calcParameters(ali, SetScanDet.at(0), SetScanDet.at(1), SetScanDet.at(2));
     // if successful, apply parameters
     if (test){
-      edm::LogWarning("HIPAlignmentAlgorithm") << "now apply params";
+      //edm::LogWarning("HIPAlignmentAlgorithm") << "now apply params";
       theAlignmentParameterStore->applyParameters(ali);
       // set these parameters 'valid'
       ali->alignmentParameters()->setValid(true);
@@ -1212,7 +1212,7 @@ bool HIPAlignmentAlgorithm::calcParameters(Alignable* ali, int setDet, double st
 
   if ((setDet==0) && (nhit < theMinimumNumberOfHits)){
     par->setValid(false);
-    edm::LogWarning("HIPAlignmentAlgorithm") << "nhit=" << nhit << " too small,skip!";
+    //edm::LogInfo("HIPAlignmentAlgorithm") << "nhit=" << nhit << " too small,skip!";
     return false;
   }
 
