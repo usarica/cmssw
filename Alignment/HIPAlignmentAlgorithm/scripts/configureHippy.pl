@@ -16,7 +16,7 @@ open (datafile1) or die "Can't open the file!";
 open (iovrange) or die "Can't open the iovfile!";
 @iovInput1 = <iovrange>;
 
-print "iovfile: $iovrange \n";
+print "IOV file: $iovrange \n";
 
 $j = 0;
 $k = 0;
@@ -26,7 +26,7 @@ foreach $iovv ( @iovInput1) {
    $iovstr .= "$iovv,";
 }
 chop($iovstr);
-print "$iovstr";
+print "IOVs: $iovstr\n";
 
 system( "
 mkdir -p $odir/main/;
@@ -70,7 +70,7 @@ foreach $data1 ( @dataFileInput1 ) {
    ($dataskim,$path,$suffix) = fileparse($datafile,,qr"\..[^.]*$");
 
    system( "
-   cp python/$dataskim\TrackSelection_cff_py.txt $odir/.;
+   cp $intrkselcfg/$dataskim\TrackSelection_cff_py.txt $odir/;
    " );
 
 
@@ -93,7 +93,7 @@ foreach $data1 ( @dataFileInput1 ) {
       system( "
       mkdir -p $odir/job$j;
       cp $odir/align_tpl_py.txt $odir/job$j/align_cfg.py;
-      cp $odir/runScript.csh $odir/job$j/.;
+      cp $odir/runScript.csh $odir/job$j/;
       " );
       # run script
       open OUTFILE,"$odir/job$j/runScript.csh";
@@ -111,7 +111,7 @@ foreach $data1 ( @dataFileInput1 ) {
       close OUTFILE;
       system "chmod a+x $odir/job$j/runScript.csh";
       if ($jsuccess == 0){
-         print "Job $j did nor setup successfully. Decrementing job number back.\n";
+         print "Job $j did not setup successfully. Decrementing job number back.\n";
          system "rm -rf $odir/job$j";
          $j--;
       }
@@ -121,8 +121,8 @@ foreach $data1 ( @dataFileInput1 ) {
 }
 
 foreach $iov ( @iovInput1) {
-   print "$iov";
    chomp($iov);
+   print "Configuring IOV $iov\n";
    $k++;
    system( "
    cp $odir/upload_tpl_py.txt $odir/upload_cfg_$k.py;
