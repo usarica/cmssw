@@ -72,12 +72,35 @@ process.AlignmentProducer.algoConfig.IOVrange=cms.vuint32(<iovs>)
 #process.AlignmentProducer.algoConfig.fillTrackMonitoring=True
 process.AlignmentProducer.algoConfig.fillTrackMonitoring=False
 
+process.AlignmentProducer.ParameterBuilder.parameterTypes = cms.vstring(
+                                  'SelectorRigid,RigidBody',
+                                  #'SelectorBowed,BowedSurface',
+                                  #'SelectorTwoBowed,TwoBowedSurfaces',
+                                 )
 
 ### Set parameters to align (all modules in this example)
+#process.AlignmentProducer.ParameterBuilder.SelectorBowed = cms.PSet(
+#    alignParams = cms.vstring(
+#        "TrackerP1PXBModule,111111 111",
+#        "TrackerP1PXECModule,110111 111",
+#        "TrackerTIBModuleUnit,111111 111",
+#        "TrackerTIDModuleUnit,100111 111",
+#        "TrackerTECModuleUnit,100111 111,tecSingleSens",
+#    ),
+#    tecSingleSens = cms.PSet(tecDetId = cms.PSet(ringRanges = cms.vint32(1,4))),
+#)
+#process.AlignmentProducer.ParameterBuilder.SelectorTwoBowed = cms.PSet(
+#    alignParams = cms.vstring(
+#        "TrackerTOBModuleUnit,100111 111 100111 111",
+#        "TrackerTECModuleUnit,100111 111 100111 111,tecDoubleSens",
+#    ),
+#    tecDoubleSens = cms.PSet(tecDetId = cms.PSet(ringRanges = cms.vint32(5,7))),
+#)
 
-process.AlignmentProducer.ParameterBuilder.Selector = cms.PSet(
+
+process.AlignmentProducer.ParameterBuilder.SelectorRigid = cms.PSet(
     alignParams = cms.vstring(
-        'TrackerP1PXBModule,101111',
+        'TrackerP1PXBModule,111111',
 #        'TrackerP1PXBLadder,111111',
 #        'TrackerP1PXBLayer,111111',
 #        'TrackerP1PXBHalfBarrel,111111',
@@ -93,7 +116,7 @@ process.AlignmentProducer.ParameterBuilder.Selector = cms.PSet(
 
 
 #        'TrackerTIBModuleUnit,101111',
-        'TrackerTIBModule,101111',
+        'TrackerTIBModule,111111',
 #        'TrackerTIBString,111111',
 #        'TrackerTIBSurface,111111',
 #        'TrackerTIBHalfShell,111111',
@@ -102,7 +125,7 @@ process.AlignmentProducer.ParameterBuilder.Selector = cms.PSet(
 #        'TrackerTIBBarrel,111111',
 
 
-#        'TrackerTIDModuleUnit,111111',
+#        'TrackerTIDModuleUnit,100111',
         'TrackerTIDModule,100111',
 #        'TrackerTIDSide,111111',
 #        'TrackerTIDRing,111111',
@@ -110,7 +133,7 @@ process.AlignmentProducer.ParameterBuilder.Selector = cms.PSet(
 #        'TrackerTIDEndcap,111111',
 
 
-#        'TrackerTOBModuleUnit,101111',
+#        'TrackerTOBModuleUnit,100111',
         'TrackerTOBModule,100111',
 #        'TrackerTOBRod,111111',
 #        'TrackerTOBLayer,111111',
@@ -118,7 +141,7 @@ process.AlignmentProducer.ParameterBuilder.Selector = cms.PSet(
 #        'TrackerTOBBarrel,111111',
 
 
-#        'TrackerTECModuleUnit,111111',
+#        'TrackerTECModuleUnit,100111',
         'TrackerTECModule,100111',
 #        'TrackerTECRing,111111',
 #        'TrackerTECPetal,111111',
