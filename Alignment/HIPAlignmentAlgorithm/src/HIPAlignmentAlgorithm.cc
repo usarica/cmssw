@@ -1292,10 +1292,7 @@ void HIPAlignmentAlgorithm::collector(void){
     for (int ijob=1; ijob<=theCollectorNJobs; ijob++){
       edm::LogInfo("Alignment") << "@SUB=HIPAlignmentAlgorithm::collector" << "Pre-reading uservar for job " << ijob;
 
-      std::stringstream ss;
-      std::string str;
-      ss << ijob;
-      ss >> str;
+      std::string str = std::to_string(ijob);
       std::string uvfile = theCollectorPath+"/job"+str+"/"+suvarfilecore;
 
       std::vector<AlignmentUserVariables*> uvarvec = HIPIO.readHIPUserVariables(theAlignables, uvfile.c_str(), theIteration, ioerr);
@@ -1336,10 +1333,7 @@ void HIPAlignmentAlgorithm::collector(void){
   for (int ijob=1; ijob<=theCollectorNJobs; ijob++){
     edm::LogInfo("Alignment") << "@SUB=HIPAlignmentAlgorithm::collector" << "Reading uservar for job " << ijob;
 
-    std::stringstream ss;
-    std::string str;
-    ss << ijob;
-    ss >> str;
+    std::string str = std::to_string(ijob);
     std::string uvfile = theCollectorPath+"/job"+str+"/"+suvarfilecore;
 
     std::vector<AlignmentUserVariables*> uvarvec = HIPIO.readHIPUserVariables(theAlignables, uvfile.c_str(), theIteration, ioerr);
